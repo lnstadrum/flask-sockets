@@ -27,7 +27,7 @@ class SocketMiddleware(object):
     def __call__(self, environ, start_response):
         adapter = self.ws.url_map.bind_to_environ(environ)
         try:
-            handler, values = adapter.match()
+            handler, values = adapter.match(websocket=True)
             environment = environ['wsgi.websocket']
             cookie = None
             if 'HTTP_COOKIE' in environ:
@@ -75,7 +75,7 @@ class Sockets(object):
         return decorator
 
     def add_url_rule(self, rule, _, f, **options):
-        self.url_map.add(Rule(rule, endpoint=f))
+        self.url_map.add(Rule(rule, endpoint=f, websocket=True))
 
     def register_blueprint(self, blueprint, **options):
         """
@@ -106,7 +106,7 @@ if ('Worker' in locals() and 'PyWSGIHandler' in locals() and
 
     class GunicornWebSocketHandler(PyWSGIHandler, WebSocketHandler):
         def log_request(self):
-            if '101' not in self.status:
+            if b'101' not in self.status:
                 super(GunicornWebSocketHandler, self).log_request()
 
     Worker.wsgi_handler = GunicornWebSocketHandler
